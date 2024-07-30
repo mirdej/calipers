@@ -1,0 +1,22 @@
+#######################################
+# Syntax Coloring Map For Caliper Library
+#######################################
+# Class
+#######################################
+
+Caliper	KEYWORD1
+
+#######################################
+# Methods and Functions
+#######################################
+
+begin	KEYWORD2
+available	KEYWORD2
+is_on	KEYWORD2
+print	KEYWORD2
+get_mm	KEYWORD2
+get_inch	KEYWORD2
+
+#######################################
+# Constants
+#######################################
