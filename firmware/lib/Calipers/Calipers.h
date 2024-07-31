@@ -5,7 +5,9 @@
 /*
 
 Arduino Library for reading cheap chinese digital vernier calipers
-by Michael Egger
+© 2024 by Michael Egger AT anyma.ch
+MIT License
+
 
 
 Based on code from Ahmed Ragab
