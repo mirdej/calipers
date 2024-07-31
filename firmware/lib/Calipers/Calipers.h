@@ -21,9 +21,12 @@ https://github.com/dave-herbert/DialIndicator
 Good read about ISR in classes/arduino libraries
 https://www.onetransistor.eu/2019/05/arduino-class-interrupts-and-callbacks.html
 
-
 */
 #define CALIPER_RX_BUF_SIZE 24
+
+#ifndef IRAM_ATTR
+#define IRAM_ATTR
+#endif
 
 struct Calipers
 {
@@ -34,9 +37,10 @@ public:
     void print();
     float get_mm();
     float get_inch();
+    void clk_ISR();
 
 private:
-    static void clk_ISR(void *data);
+   // static void clk_ISR(void *data);
     int pin_clk;
     int pin_data;
 
@@ -51,6 +55,13 @@ private:
 
     bool mm_in = 0; // 0 for mm, 1 for inch
 };
+
+
+Calipers * pointerToClass;
+
+static void outsideInterruptHandler(void) { // define global handler
+  pointerToClass->clk_ISR(); // calls class member handler
+}
 
 // ------------------------------------------------------------------------------------------------
 // Is the caliper turned on (is the clock running)
@@ -87,11 +98,14 @@ void Calipers::begin(int datapin, int clockpin)
     pin_data = datapin;
     pinMode(pin_clk, INPUT);
     pinMode(pin_data, INPUT);
-    // attachInterrupt(digitalPinToInterrupt(pin_clk), &clk_ISR(this), FALLING);
+      pointerToClass = this; // assign current instance to pointer (IMPORTANT!!!)
+
+//https://www.onetransistor.eu/2019/05/arduino-class-interrupts-and-callbacks.html
+     attachInterrupt(digitalPinToInterrupt(pin_clk), outsideInterruptHandler, RISING);
 
     // Code below inspired by:
     // https://esp32.com/viewtopic.php?t=25929#
-
+/* 
     gpio_config_t io_conf{
         .pin_bit_mask = 1ULL << pin_clk,
         .mode = GPIO_MODE_INPUT,
@@ -102,7 +116,7 @@ void Calipers::begin(int datapin, int clockpin)
     ESP_ERROR_CHECK(gpio_config(&io_conf));
     (void)gpio_install_isr_service(0); // ignore errors as it could be already installed
     ESP_ERROR_CHECK(gpio_isr_handler_add((gpio_num_t)pin_clk, clk_ISR, this));
-}
+ */}
 
 // ------------------------------------------------------------------------------------------------
 // Print caliper data to Serial monitor
@@ -134,7 +148,7 @@ void Calipers::print()
     signed int m = raw_data[1];
     float f = ((float)m / 20480.);
 
-    Serial.printf(" - Rx-isx: %d - lower %d , upper %d - %f", rx_bit_idx, raw_data[0], raw_data[1], f);
+//    Serial.printf(" - Rx-isx: %d - lower %d , upper %d - %f", rx_bit_idx, raw_data[0], raw_data[1], f);
     Serial.println();
 
     raw_data_last = raw_data[0];
@@ -164,54 +178,55 @@ bool Calipers::available()
 // ------------------------------------------------------------------------------------------------
 // Interrupt Service Routine on falling edge of Clock pin
 
-void IRAM_ATTR Calipers::clk_ISR(void *data)
+//void IRAM_ATTR Calipers::clk_ISR(void *data)
+void IRAM_ATTR Calipers::clk_ISR()
 {
-    Calipers *c = (Calipers *)data;
 
-    if (millis() - c->last_rx_millis > 5)
+
+    if (millis() - last_rx_millis > 5)
     {
-        c->rx_bit_idx = 0;
-        c->rx_buf_idx = 0;
-        c->rx_buf[0] = 0;
-        c->rx_buf[1] = 0;
-        c->rx_done = false;
+        rx_bit_idx = 0;
+        rx_buf_idx = 0;
+        rx_buf[0] = 0;
+        rx_buf[1] = 0;
+        rx_done = false;
     }
 
-    if (c->rx_bit_idx < CALIPER_RX_BUF_SIZE)
+    if (rx_bit_idx < CALIPER_RX_BUF_SIZE)
     {
         char n = 0;
         for (int i = 0; i < 4; i++) // four times oversampling to overcome glitches
         {
-            if (!digitalRead(c->pin_data))
+            if (!digitalRead(pin_data))
             {
                 n++;
             }
         }
         if (n > 2)
         {
-            c->rx_buf[c->rx_buf_idx] |= (1 << c->rx_bit_idx);
+            rx_buf[rx_buf_idx] |= (1 << rx_bit_idx);
         }
-        c->rx_bit_idx++;
+        rx_bit_idx++;
     }
     else
     {
         // log_e("Too many bits.");
     }
 
-    if (c->rx_bit_idx >= CALIPER_RX_BUF_SIZE)
+    if (rx_bit_idx >= CALIPER_RX_BUF_SIZE)
     {
-        if (c->rx_buf_idx == 0)
+        if (rx_buf_idx == 0)
         {
-            c->rx_buf_idx = 1;
-            c->rx_bit_idx = 0;
+            rx_buf_idx = 1;
+            rx_bit_idx = 0;
         }
         else
         {
-            c->rx_done = true;
+            rx_done = true;
         }
     }
 
-    c->last_rx_millis = millis();
+    last_rx_millis = millis();
 }
 
 #endif
