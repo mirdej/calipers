@@ -17,6 +17,11 @@ http://www.shumatech.com/support/chinese_scales.htm
 More:
 https://github.com/dave-herbert/DialIndicator
 
+
+Good read about ISR in classes/arduino libraries
+https://www.onetransistor.eu/2019/05/arduino-class-interrupts-and-callbacks.html
+
+
 */
 #define CALIPER_RX_BUF_SIZE 24
 
