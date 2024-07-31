@@ -54,8 +54,6 @@ private:
 
     uint32_t raw_data[2];
     uint32_t raw_data_last;
-
-    bool mm_in = 0; // 0 for mm, 1 for inch
 };
 
 Calipers *pointerToClass;
@@ -79,7 +77,11 @@ bool Calipers::is_on()
 // Get value in inches
 float Calipers::get_inch()
 {
-    signed int m = raw_data[1];
+    int32_t m = raw_data[1];
+    if (m & (1 << 23))
+    {
+        m |= 0xFF000000; // make 32bit 2's complement from 24bit 2's complement       
+    }
     float f = ((float)m / 20480.);
     return f;
 }

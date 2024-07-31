@@ -8,7 +8,7 @@ const int NUM_BTNS = 2;
 const int PIN_CALIP_CLK = 18;
 const int PIN_CALIP_DATA = 8;
 const int PIN_PIX = 8;
-const int PIN_BTN[NUM_BTNS] = {7, 6};  
+const int PIN_BTN[NUM_BTNS] = {7, 6};
 
 BleKeyboard bleKeyboard("Calipers", "[ a n y m a ]", 90);
 Calipers caliper;
@@ -40,19 +40,30 @@ void btn_task(void *)
         {
           log_v("Button %d pressed", i);
           char buf[10];
+          float f = caliper.get_mm();
 
           if (bleKeyboard.isConnected())
           {
+
+            // Weird Bug? prints ' instead of - on negative numbers (BLE only)
+            if (f < 0.)
+            {
+              f = 0. - f;
+              bleKeyboard.print('/'); // ASCII slash character turns into minus sign
+            }
+
             switch (i)
             {
             case 0:
-              sprintf(buf, "%.2f\n", caliper.get_mm());
+
+              sprintf(buf, "%.2f\n", f);
               Serial.print(buf);
               bleKeyboard.print(buf);
-              // bleKeyboard.write(KEY_MEDIA_VOLUME_DOWN);
               break;
+
+              // radius from diameter (for sketchup...)
             case 1:
-              sprintf(buf, "%.2f\n", caliper.get_mm() / 2.);
+              sprintf(buf, "%.2f\n", f / 2.);
               Serial.print(buf);
               bleKeyboard.print(buf);
               break;
@@ -70,18 +81,32 @@ void btn_task(void *)
   }
 }
 
-void print_wakeup_reason(){
+void print_wakeup_reason()
+{
   esp_sleep_wakeup_cause_t wakeup_reason;
 
   wakeup_reason = esp_sleep_get_wakeup_cause();
 
-  switch(wakeup_reason){
-    case ESP_SLEEP_WAKEUP_EXT0 : Serial.println("Wakeup caused by external signal using RTC_IO"); break;
-    case ESP_SLEEP_WAKEUP_EXT1 : Serial.println("Wakeup caused by external signal using RTC_CNTL"); break;
-    case ESP_SLEEP_WAKEUP_TIMER : Serial.println("Wakeup caused by timer"); break;
-    case ESP_SLEEP_WAKEUP_TOUCHPAD : Serial.println("Wakeup caused by touchpad"); break;
-    case ESP_SLEEP_WAKEUP_ULP : Serial.println("Wakeup caused by ULP program"); break;
-    default : Serial.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); break;
+  switch (wakeup_reason)
+  {
+  case ESP_SLEEP_WAKEUP_EXT0:
+    Serial.println("Wakeup caused by external signal using RTC_IO");
+    break;
+  case ESP_SLEEP_WAKEUP_EXT1:
+    Serial.println("Wakeup caused by external signal using RTC_CNTL");
+    break;
+  case ESP_SLEEP_WAKEUP_TIMER:
+    Serial.println("Wakeup caused by timer");
+    break;
+  case ESP_SLEEP_WAKEUP_TOUCHPAD:
+    Serial.println("Wakeup caused by touchpad");
+    break;
+  case ESP_SLEEP_WAKEUP_ULP:
+    Serial.println("Wakeup caused by ULP program");
+    break;
+  default:
+    Serial.printf("Wakeup was not caused by deep sleep: %d\n", wakeup_reason);
+    break;
   }
 }
 
@@ -94,7 +119,7 @@ void setup()
   Serial.begin(115200);
   delay(1000);
 
-print_wakeup_reason();
+  print_wakeup_reason();
 
   log_v("Starting BLE");
   bleKeyboard.begin();
@@ -127,7 +152,9 @@ void loop()
 
   if (caliper.available())
   {
-    delay(1);
+    //  caliper.print(); // print debug info
+
+    delay(2);
     // Serial.printf("Distance: %.2f\n",caliper.get_mm());
   }
   delay(4);
