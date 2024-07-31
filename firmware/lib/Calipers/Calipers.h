@@ -40,7 +40,7 @@ public:
     void clk_ISR();
 
 private:
-   // static void clk_ISR(void *data);
+    // static void clk_ISR(void *data);
     int pin_clk;
     int pin_data;
 
@@ -56,22 +56,22 @@ private:
     bool mm_in = 0; // 0 for mm, 1 for inch
 };
 
+Calipers *pointerToClass;
 
-Calipers * pointerToClass;
-
-static void outsideInterruptHandler(void) { // define global handler
-  pointerToClass->clk_ISR(); // calls class member handler
+static void outsideInterruptHandler(void)
+{                              // define global handler
+    pointerToClass->clk_ISR(); // calls class member handler
 }
 
 // ------------------------------------------------------------------------------------------------
 // Is the caliper turned on (is the clock running)
-bool Calipers::is_on() {
-    if (millis() < 3000) return true;
-    
+bool Calipers::is_on()
+{
+    if (millis() < 3000)
+        return true;
+
     return (millis() - last_rx_millis < 500);
 }
-
-
 
 // ------------------------------------------------------------------------------------------------
 // Get value in inches
@@ -89,7 +89,6 @@ float Calipers::get_mm()
     return get_inch() * 25.4;
 }
 
-
 // ------------------------------------------------------------------------------------------------
 // Init Caliper class, set pins and attach gpio interrupt to clock pin
 void Calipers::begin(int datapin, int clockpin)
@@ -98,10 +97,10 @@ void Calipers::begin(int datapin, int clockpin)
     pin_data = datapin;
     pinMode(pin_clk, INPUT);
     pinMode(pin_data, INPUT);
-      pointerToClass = this; // assign current instance to pointer (IMPORTANT!!!)
+    pointerToClass = this; // assign current instance to pointer (IMPORTANT!!!)
 
-//https://www.onetransistor.eu/2019/05/arduino-class-interrupts-and-callbacks.html
-     attachInterrupt(digitalPinToInterrupt(pin_clk), outsideInterruptHandler, RISING);
+    // https://www.onetransistor.eu/2019/05/arduino-class-interrupts-and-callbacks.html
+    attachInterrupt(digitalPinToInterrupt(pin_clk), outsideInterruptHandler, RISING);
 
     // Code below inspired by:
     // https://esp32.com/viewtopic.php?t=25929#
@@ -148,7 +147,7 @@ void Calipers::print()
     signed int m = raw_data[1];
     float f = ((float)m / 20480.);
 
-//    Serial.printf(" - Rx-isx: %d - lower %d , upper %d - %f", rx_bit_idx, raw_data[0], raw_data[1], f);
+    //    Serial.printf(" - Rx-isx: %d - lower %d , upper %d - %f", rx_bit_idx, raw_data[0], raw_data[1], f);
     Serial.println();
 
     raw_data_last = raw_data[0];
@@ -178,10 +177,9 @@ bool Calipers::available()
 // ------------------------------------------------------------------------------------------------
 // Interrupt Service Routine on falling edge of Clock pin
 
-//void IRAM_ATTR Calipers::clk_ISR(void *data)
+// void IRAM_ATTR Calipers::clk_ISR(void *data)
 void IRAM_ATTR Calipers::clk_ISR()
 {
-
 
     if (millis() - last_rx_millis > 5)
     {
