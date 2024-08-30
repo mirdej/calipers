@@ -37,9 +37,9 @@
         "other_text_thickness": 0.15,
         "other_text_upright": false,
         "pads": {
-          "drill": 0.762,
-          "height": 1.524,
-          "width": 1.524
+          "drill": 1.2,
+          "height": 1.8,
+          "width": 1.8
         },
         "silk_line_width": 0.1,
         "silk_text_italic": false,
@@ -226,7 +226,15 @@
       "mpn": ""
     },
     "layer_presets": [],
-    "viewports": []
+    "viewports": [
+      {
+        "h": 36328712.99389578,
+        "name": "fd",
+        "w": 90388610.23123512,
+        "x": 153855694.88438764,
+        "y": 34159643.503069125
+      }
+    ]
   },
   "boards": [],
   "cvpcb": {

@@ -3,15 +3,23 @@
 #include "Calipers.h"
 #include "SPI.h"
 
-const int NUM_PIX = 17;
 const int NUM_BTNS = 2;
-const int PIN_CALIP_CLK = 18;
-const int PIN_CALIP_DATA = 8;
-const int PIN_PIX = 8;
-const int PIN_BTN[NUM_BTNS] = {7, 6};
+const int PIN_CALIP_CLK = 1;
+const int PIN_CALIP_DATA = 0;
+const int PIN_BTN[NUM_BTNS] = {3, 10};
 
 BleKeyboard bleKeyboard("Calipers", "[ a n y m a ]", 90);
 Calipers caliper;
+
+uint64_t button_pin_mask()
+{
+  uint64_t mask = 0;
+  for (int i = 0; i < NUM_BTNS; i++)
+  {
+    mask |= (1 << PIN_BTN[i]);
+  }
+  return mask;
+}
 
 //----------------------------------------------------------------------------------------
 //																				BUTTONS
@@ -118,6 +126,8 @@ void setup()
 {
   Serial.begin(115200);
   delay(1000);
+  Serial.println(PROJECT_PATH);
+  Serial.println(FIRMWARE_VERSION);
 
   print_wakeup_reason();
 
@@ -125,8 +135,8 @@ void setup()
   bleKeyboard.begin();
 
   caliper.begin(PIN_CALIP_DATA, PIN_CALIP_CLK);
-  esp_sleep_enable_ext0_wakeup(GPIO_NUM_18, 0);
-
+ // esp_deep_sleep_enable_gpio_wakeup(button_pin_mask(), ESP_GPIO_WAKEUP_GPIO_LOW);
+ esp_deep_sleep_enable_gpio_wakeup(1 << PIN_CALIP_CLK, ESP_GPIO_WAKEUP_GPIO_LOW);
   xTaskCreate(
       btn_task,  // Function that implements the task.
       "Buttons", // Text name for the task.
